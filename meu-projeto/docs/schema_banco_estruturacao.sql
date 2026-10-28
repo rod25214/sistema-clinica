@@ -1,2 +1,2 @@
-﻿-- Fonte de verdade: supabase/migrations/20241012120000_multi_clinica.sql
+-- Fonte de verdade: supabase/migrations/20241012120000_multi_clinica.sql
 -- Cole aquele arquivo no SQL Editor do Supabase (Dashboard → SQL → New query).
