@@ -20,19 +20,6 @@ export default function RecuperarSenhaPage() {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/recuperar-senha", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null)
-        setError(data?.error || "Não foi possível enviar o e-mail.")
-        return
-      }
-
       setSent(true)
     } catch {
       setError("Não foi possível conectar ao servidor.")

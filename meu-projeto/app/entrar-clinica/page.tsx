@@ -27,26 +27,6 @@ function EntrarClinicaForm() {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/convites/aceitar", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token.trim() }),
-      })
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok) {
-        setError(data?.error || "Não foi possível aceitar o convite.")
-        return
-      }
-
-      if (data?.clinic_id) {
-        try {
-          localStorage.setItem("app_clinic_id", data.clinic_id)
-          sessionStorage.setItem("app_clinic_id", data.clinic_id)
-        } catch {}
-      }
-
       router.replace("/")
     } catch {
       setError("Não foi possível conectar ao servidor.")

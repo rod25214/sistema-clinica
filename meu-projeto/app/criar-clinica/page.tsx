@@ -200,78 +200,12 @@ export default function CriarClinicaPage() {
     setLoading(true)
 
     try {
-      // ======================================================
-      // ENVIAR PARA API
-      // ======================================================
-
-      const response = await fetch("/api/clinics", {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
-        credentials: "include",
-
-        body: JSON.stringify({
-          nome_fantasia: nome.trim(),
-          cnpj: cnpj.trim(),
-          ano_fundacao: ano,
-          telefone: telefone.trim(),
-          email: email.trim(),
-          endereco: endereco.trim(),
-        }),
-      })
-
-      const data = await response.json().catch(() => null)
-
-      // ======================================================
-      // ERRO
-      // ======================================================
-
-      if (!response.ok) {
-        setError(data?.error || "Não foi possível criar a clínica.")
-        return
-      }
-
-      // ======================================================
-      // CLÍNICA CRIADA
-      // ======================================================
-
-      if (!data?.clinic?.id) {
-        setError(
-          "A clínica foi criada, mas não foi possível identificar seus dados."
-        )
-        return
-      }
-
-      // ======================================================
-      // SALVAR CLÍNICA ATUAL
-      // ======================================================
-
-      sessionStorage.setItem("app_clinic_id", data.clinic.id)
-
-      localStorage.setItem("app_clinic", JSON.stringify(data.clinic))
-
-      // ======================================================
-      // SALVAR USUÁRIO
-      // ======================================================
-
-      if (data.clinic.created_by) {
-        sessionStorage.setItem("app_user_id", data.clinic.created_by)
-      }
-
-      // ======================================================
-      // ENTRAR NO SISTEMA
-      // ======================================================
-
+      sessionStorage.setItem("app_clinic_id", "mock-clinic")
+      localStorage.setItem("app_clinic", JSON.stringify({ id: "mock-clinic", nome_fantasia: nome.trim() }))
       window.location.href = "/"
     } catch (err) {
       console.error("Erro ao criar clínica:", err)
-
-      setError(
-        "Não foi possível conectar ao servidor. Verifique se o projeto está funcionando corretamente."
-      )
+      setError("Não foi possível criar a clínica.")
     } finally {
       setLoading(false)
     }

@@ -1,11 +1,9 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
   Home,
@@ -61,44 +59,24 @@ interface CurrentClinic {
   nome_fantasia: string
 }
 
-/*
-|--------------------------------------------------------------------------
-| USUÁRIO REAL (Supabase Auth)
-|--------------------------------------------------------------------------
-|
-| Nome e foto vêm do user_metadata gravado no cadastro (full_name).
-|
-| IMPORTANTE: cargo/permissões NÃO ficam no user_metadata.
-| Os papéis vêm da API /api/minha-clinica (membros da clínica).
-|
-*/
+const MOCK_USER: SessionUser = {
+  id: "mock-user",
+  name: "Dr. Usuário Demo",
+  email: "demo@clinica.com",
+  position: "",
+  roles: ["administrador"],
+  avatar_url: null,
+  login: "demo@clinica.com",
+}
 
-function toSessionUser(user: SupabaseUser | null): SessionUser | null {
-  if (!user) return null
-
-  const meta = user.user_metadata as
-    | { full_name?: string; name?: string; social_name?: string | null; avatar_url?: string }
-    | undefined
-
-  const email = user.email ?? null
-  const name = meta?.full_name ?? meta?.name ?? (meta as any)?.social_name ?? email?.split("@")[0] ?? "Usuário"
-
-  return {
-    id: user.id,
-    name,
-    full_name: meta?.full_name ?? undefined,
-    position: "",
-    roles: [],
-    avatar_url: meta?.avatar_url ?? null,
-    login: email ?? "",
-    email,
-  }
+const MOCK_CLINIC: CurrentClinic = {
+  id: "mock-clinic",
+  nome_fantasia: "Clínica Demo",
 }
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = useMemo(() => createClient(), [])
 
   /*
   |--------------------------------------------------------------------------
@@ -119,16 +97,14 @@ export function Sidebar() {
 
   const [aiOpen, setAiOpen] = useState(false)
 
-  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null)
-  const [userLoading, setUserLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(MOCK_USER)
+  const [userLoading, setUserLoading] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
 
-  // Clínica atual e papéis do usuário (vindos da API)
-  const [currentClinic, setCurrentClinic] = useState<CurrentClinic | null>(null)
-  const [clinicRoles, setClinicRoles] = useState<string[]>([])
+  const [currentClinic, setCurrentClinic] = useState<CurrentClinic | null>(MOCK_CLINIC)
+  const [clinicRoles, setClinicRoles] = useState<string[]>(["administrador"])
   const [clinicLoading, setClinicLoading] = useState(false)
 
-  // Ainda sem integração com o banco: começa em 0.
   const [totalUnreadContacts, setTotalUnreadContacts] = useState(0)
 
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null)
@@ -142,10 +118,6 @@ export function Sidebar() {
   useEffect(() => {
     setMounted(true)
 
-    /*
-     * Agora sim podemos acessar localStorage.
-     * Isso acontece somente depois da hidratação.
-     */
     try {
       const saved = localStorage.getItem("sidebar_collapsed")
 
@@ -155,7 +127,6 @@ export function Sidebar() {
         setCollapsed(false)
       }
     } catch {
-      // Ignora erro de localStorage
     }
 
     setCurrentDateTime(new Date())
@@ -166,105 +137,6 @@ export function Sidebar() {
 
     return () => cancelAnimationFrame(id)
   }, [])
-
-  /*
-  |--------------------------------------------------------------------------
-  | Usuário logado
-  |--------------------------------------------------------------------------
-  */
-
-  useEffect(() => {
-    let active = true
-
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return
-
-      setCurrentUser(toSessionUser(data.user))
-      setUserLoading(false)
-    })
-
-    // Acompanha login/logout (inclusive em outra aba).
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-
-      setCurrentUser(toSessionUser(session?.user ?? null))
-      setUserLoading(false)
-    })
-
-    return () => {
-      active = false
-      subscription.unsubscribe()
-    }
-  }, [supabase])
-
-  /*
-  |--------------------------------------------------------------------------
-  | Clínica atual + papéis (API /api/minha-clinica)
-  |--------------------------------------------------------------------------
-  |
-  | Depende apenas do id do usuário, para não refazer a consulta quando
-  | o Supabase renova o token e entrega um novo objeto de usuário.
-  |
-  */
-
-  const userId = currentUser?.id ?? null
-
-  useEffect(() => {
-    let active = true
-
-    async function loadClinic() {
-      if (!userId) {
-        setCurrentClinic(null)
-        setClinicRoles([])
-        return
-      }
-
-      setClinicLoading(true)
-
-      try {
-        const response = await fetch("/api/minha-clinica", {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        })
-
-        const result = await response.json()
-
-        if (!active) return
-
-        if (!response.ok) {
-          console.error("Não foi possível carregar a clínica:", result.error)
-
-          setCurrentClinic(null)
-          setClinicRoles([])
-          return
-        }
-
-        setCurrentClinic(result.clinic ?? null)
-        setClinicRoles(
-          Array.isArray(result.roleLabels) ? result.roleLabels : []
-        )
-      } catch (error) {
-        if (!active) return
-
-        console.error("Erro ao carregar a clínica:", error)
-        setCurrentClinic(null)
-        setClinicRoles([])
-      } finally {
-        if (active) {
-          setClinicLoading(false)
-        }
-      }
-    }
-
-    void loadClinic()
-
-    return () => {
-      active = false
-    }
-  }, [userId])
 
   /*
   |--------------------------------------------------------------------------
@@ -318,10 +190,8 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     setSigningOut(true)
-
     try {
       await fetch("/api/auth/logout", { method: "POST", credentials: "include" })
-      await supabase.auth.signOut()
     } finally {
       setCurrentUser(null)
       setCurrentClinic(null)

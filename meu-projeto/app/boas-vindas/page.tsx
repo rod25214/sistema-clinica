@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -15,8 +15,6 @@ import {
   UserPlus,
   ChevronRight,
 } from "lucide-react"
-
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -44,34 +42,12 @@ function useZoomCompensation() {
 }
 
 function ProfileMenu() {
-  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
-  const [signingOut, setSigningOut] = useState(false)
-  const [email, setEmail] = useState<string | null>(null)
-  const [fullName, setFullName] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    let active = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return
-      const user = data.user
-      const meta = user?.user_metadata as any
-      setEmail(user?.email ?? null)
-      setFullName(meta?.full_name ?? meta?.name ?? null)
-      setAvatarUrl(meta?.avatar_url ?? null)
-      setLoading(false)
-    })
-    return () => { active = false }
-  }, [supabase])
-
-  const displayName = fullName ?? email?.split("@")[0] ?? "Minha conta"
-  const initials = displayName.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase()
+  const displayName = "Usuário Demo"
+  const initials = "UD"
 
   async function handleSignOut() {
-    setSigningOut(true)
-    await supabase.auth.signOut()
     router.replace("/login")
     router.refresh()
   }
@@ -81,12 +57,12 @@ function ProfileMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-auto max-w-[260px] justify-start gap-3 rounded-xl border border-border/70 bg-background/70 p-2 shadow-sm backdrop-blur-md hover:bg-accent/60">
           <Avatar className="h-8 w-8 shrink-0 ring-2 ring-primary/15">
-            <AvatarImage src={avatarUrl || undefined} />
-            <AvatarFallback>{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : initials || "U"}</AvatarFallback>
+            <AvatarImage src={undefined} />
+            <AvatarFallback>{initials || "U"}</AvatarFallback>
           </Avatar>
           <div className="hidden min-w-0 text-left sm:block">
-            <p className="truncate text-sm font-medium">{loading ? "Carregando..." : displayName}</p>
-            {email && <p className="truncate text-xs text-muted-foreground">{email}</p>}
+            <p className="truncate text-sm font-medium">{displayName}</p>
+            <p className="truncate text-xs text-muted-foreground">demo@clinica.com</p>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -97,9 +73,9 @@ function ProfileMenu() {
           <Link href="/profile"><User className="mr-2 h-4 w-4" />Perfil</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled={signingOut} onSelect={(e) => { e.preventDefault(); handleSignOut() }}>
-          {signingOut ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
-          {signingOut ? "Saindo..." : "Sair"}
+        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleSignOut() }}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -253,26 +229,17 @@ function ClinicList({
 
 export default function BoasVindasPage() {
   const router = useRouter()
-  const [clinics, setClinics] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [selecting, setSelecting] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(0)
 
-  useEffect(() => {
-    let active = true
-    fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
-      .then(async (res) => {
-        const data = await res.json()
-        if (!active) return
-        if (data.authenticated && Array.isArray(data.clinics)) {
-          setClinics(data.clinics)
-        }
-      })
-      .catch(() => setError("Não foi possível carregar clínicas."))
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [])
+  const clinics = [
+    { clinic_id: "mock-clinic-1", clinic: { id: "mock-clinic-1", nome_fantasia: "Clínica Sorriso Demo" }, role: "Administrador" },
+    { clinic_id: "mock-clinic-2", clinic: { id: "mock-clinic-2", nome_fantasia: "OdontoMax Demo" }, role: "Dentista" },
+    { clinic_id: "mock-clinic-3", clinic: { id: "mock-clinic-3", nome_fantasia: "Clínica Vida Demo" }, role: "Recepcionista" },
+  ]
+
+  const loading = false
+  const error = null
 
   const pageCount = Math.max(1, Math.ceil(clinics.length / CLINICS_PER_PAGE))
 

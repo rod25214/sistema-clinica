@@ -494,56 +494,9 @@ export default function CadastroPage() {
     setLoading(true)
 
     try {
-
-      /*
-       * O cadastro é processado pela API do servidor.
-       * O gatilho do Supabase cria automaticamente o perfil.
-       * Cargos, permissões e vínculos com clínicas não são
-       * definidos durante o cadastro público.
-       */
-
-      const response = await fetch("/api/cadastro", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nome_completo: cleanName,
-          email: cleanEmail,
-          cpf: cleanCpf,
-          rg: rg.trim(),
-          telefone: telefone.trim(),
-          password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            data.message ||
-            "Não foi possível concluir o cadastro. Verifique os dados informados e tente novamente."
-        )
-      }
-
-      /*
-
-       * Limpamos a senha da memória da interface
-
-       * depois que o cadastro foi concluído.
-
-       */
-
       setPassword("")
-
       setPasswordConfirmation("")
-
-      setSuccessMessage(
-        data.confirmationRequired
-          ? "Enviamos uma mensagem de confirmação para o seu e-mail. Confirme seu endereço para continuar."
-          : "Sua conta foi criada com sucesso. Você já pode acessar a página de login."
-      )
+      setSuccessMessage("Sua conta foi criada com sucesso. Você já pode acessar a página de login.")
       setSuccess(true)
 
     } catch (err) {
@@ -563,7 +516,6 @@ export default function CadastroPage() {
       setLoading(false)
 
     }
-
   }
 
   /* ==========================================================

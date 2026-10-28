@@ -5,7 +5,6 @@ import { Sidebar } from "@/components/sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Plus, Users, Loader2 } from "lucide-react"
-import { clinicHeaders } from "@/lib/clinic-client"
 
 type Membro = {
   id: string
@@ -19,30 +18,12 @@ export default function EmployeesPage() {
   const [membros, setMembros] = useState<Membro[]>([])
 
   useEffect(() => {
-    let active = true
-    fetch("/api/equipe", {
-      credentials: "include",
-      cache: "no-store",
-      headers: clinicHeaders(),
-    })
-      .then(async (res) => {
-        const data = await res.json()
-        if (!active) return
-        if (!res.ok) {
-          setError(data?.error || "Não foi possível carregar a equipe.")
-          return
-        }
-        setMembros(data.membros ?? [])
-      })
-      .catch(() => {
-        if (active) setError("Não foi possível conectar ao servidor.")
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => {
-      active = false
-    }
+    setLoading(false)
+    setMembros([
+      { id: "1", full_name: "Dr. Usuário Demo", roleLabels: ["Administrador"] },
+      { id: "2", full_name: "Dra. Maria Exemplo", roleLabels: ["Dentista"] },
+      { id: "3", full_name: "João Recepcionista", roleLabels: ["Recepcionista"] },
+    ])
   }, [])
 
   return (

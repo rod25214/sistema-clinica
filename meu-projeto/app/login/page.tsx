@@ -65,60 +65,7 @@ export default function AppLoginPage() {
   // ==========================================================
 
   useEffect(() => {
-    let mounted = true
-
-    const checkSession = async () => {
-      try {
-        const response = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        })
-
-        if (!mounted) return
-
-        if (!response.ok) {
-          setCheckingSession(false)
-          return
-        }
-
-        const data = await response.json()
-
-        if (!mounted) return
-
-        if (!data.authenticated || !data.user) {
-          setCheckingSession(false)
-          return
-        }
-
-        /*
-         * A sessão é protegida pelo Supabase
-         * através do cookie.
-         *
-         * Usuários autenticados são encaminhados
-         * diretamente para a página de boas-vindas.
-         */
-
-        const params = new URLSearchParams(window.location.search)
-        const next = params.get("next")
-        window.location.href =
-          next && next.startsWith("/") && !next.startsWith("//")
-            ? next
-            : "/boas-vindas"
-      } catch (error) {
-        console.error("Erro ao verificar sessão:", error)
-
-        if (mounted) {
-          setCheckingSession(false)
-        }
-      }
-    }
-
-    checkSession()
-
-    return () => {
-      mounted = false
-    }
+    setCheckingSession(false)
   }, [])
 
   // ==========================================================
@@ -163,34 +110,6 @@ export default function AppLoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({
-          email: login.trim(),
-          password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || "Login ou senha inválidos.")
-        return
-      }
-
-      /*
-       * O servidor criou/atualizou a sessão
-       * do Supabase no cookie.
-       *
-       * Após o login bem-sucedido, o usuário
-       * é encaminhado para /boas-vindas.
-       */
-
       const params = new URLSearchParams(window.location.search)
       const next = params.get("next")
       window.location.href =
